@@ -856,6 +856,7 @@ async def list_links(request: Request, _=Depends(require_auth)):
             "vless_link": vless_link_for_link(d, uid, host),
             "sub_url": f"https://{host}/sub/{uid}",
             "connected_ips": len(unique_ips_for_uuid(uid)),
+            "used_fmt": fmt_bytes(d.get("used_bytes", 0)),
         })
     result.sort(key=lambda x: x["created_at"], reverse=True)
     return {"links": result}
