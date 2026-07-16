@@ -1,0 +1,1615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyber-Rage | Code Collaboration Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600;700&family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-primary: #0a0a0f;
+            --bg-secondary: #12121a;
+            --bg-tertiary: #1a1a28;
+            --bg-card: #16162a;
+            --accent-primary: #00f0ff;
+            --accent-secondary: #7c3aed;
+            --accent-tertiary: #f72585;
+            --accent-green: #00ff88;
+            --accent-orange: #ff6b00;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b8;
+            --text-muted: #6b6b80;
+            --border-color: #2a2a40;
+            --glow-cyan: 0 0 20px rgba(0, 240, 255, 0.3);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            overflow-x: hidden;
+            line-height: 1.6;
+        }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: var(--bg-primary); }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, var(--accent-primary), var(--accent-secondary)); border-radius: 4px; }
+
+        #particles-canvas {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            z-index: 0; pointer-events: none;
+        }
+
+        .preloader {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg-primary); display: flex; align-items: center;
+            justify-content: center; z-index: 9999;
+            transition: opacity 0.5s ease, visibility 0.5s ease;
+        }
+
+        .preloader.hidden { opacity: 0; visibility: hidden; }
+
+        .preloader-content { text-align: center; }
+
+        .preloader-logo {
+            font-size: 3rem; font-weight: 900;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary), var(--accent-tertiary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; animation: glitch 2s infinite;
+        }
+
+        .preloader-bar {
+            width: 200px; height: 3px; background: var(--bg-tertiary);
+            margin: 20px auto; border-radius: 3px; overflow: hidden;
+        }
+
+        .preloader-bar-fill {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 3px; animation: load 1.5s ease forwards;
+        }
+
+        @keyframes load { to { width: 100%; } }
+
+        @keyframes glitch {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+        }
+
+        .navbar {
+            position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+            padding: 1rem 2rem; transition: all 0.3s ease;
+        }
+
+        .navbar.scrolled {
+            background: rgba(10, 10, 15, 0.9); backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .nav-container {
+            max-width: 1400px; margin: 0 auto;
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .nav-logo {
+            display: flex; align-items: center; gap: 12px;
+            text-decoration: none; color: var(--text-primary); cursor: pointer;
+        }
+
+        .logo-icon {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            border-radius: 12px; display: flex; align-items: center;
+            justify-content: center; font-weight: 900; font-size: 1.2rem;
+            animation: pulse-glow 2s infinite;
+        }
+
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 10px rgba(0, 240, 255, 0.5); }
+            50% { box-shadow: 0 0 25px rgba(0, 240, 255, 0.8); }
+        }
+
+        .logo-text {
+            font-size: 1.4rem; font-weight: 800; letter-spacing: -0.5px;
+        }
+
+        .logo-text span {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+
+        .nav-links {
+            display: flex; align-items: center; gap: 2rem; list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none; color: var(--text-secondary); font-weight: 500;
+            transition: all 0.3s ease; position: relative; padding: 0.5rem 0; cursor: pointer;
+        }
+
+        .nav-links a::after {
+            content: ''; position: absolute; bottom: 0; left: 0;
+            width: 0; height: 2px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+            transition: width 0.3s ease;
+        }
+
+        .nav-links a:hover { color: var(--text-primary); }
+        .nav-links a:hover::after { width: 100%; }
+
+        .nav-actions {
+            display: flex; align-items: center; gap: 1rem;
+        }
+
+        .nav-search { position: relative; }
+
+        .nav-search input {
+            background: var(--bg-tertiary); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 0.6rem 1rem 0.6rem 2.5rem;
+            color: var(--text-primary); font-size: 0.9rem; width: 250px;
+            transition: all 0.3s ease;
+        }
+
+        .nav-search input:focus {
+            outline: none; border-color: var(--accent-primary); box-shadow: var(--glow-cyan);
+        }
+
+        .nav-search-icon {
+            position: absolute; left: 0.8rem; top: 50%;
+            transform: translateY(-50%); color: var(--text-muted);
+        }
+
+        .btn {
+            padding: 0.6rem 1.5rem; border-radius: 8px; font-weight: 600;
+            font-size: 0.9rem; cursor: pointer; transition: all 0.3s ease;
+            text-decoration: none; display: inline-flex; align-items: center;
+            gap: 0.5rem; border: none; font-family: inherit;
+        }
+
+        .btn-ghost {
+            background: transparent; border: 1px solid var(--border-color); color: var(--text-primary);
+        }
+
+        .btn-ghost:hover { border-color: var(--accent-primary); box-shadow: var(--glow-cyan); }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            color: var(--bg-primary); font-weight: 700;
+        }
+
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: var(--glow-cyan); }
+
+        .btn-outline {
+            background: transparent; border: 2px solid var(--accent-primary); color: var(--accent-primary);
+        }
+
+        .btn-outline:hover { background: var(--accent-primary); color: var(--bg-primary); }
+
+        .btn-large { padding: 1rem 2.5rem; font-size: 1.1rem; border-radius: 12px; }
+
+        .btn-success {
+            background: linear-gradient(135deg, var(--accent-green), #00cc6a);
+            color: var(--bg-primary); font-weight: 700;
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #ff4757, #ff6b81); color: white;
+        }
+
+        .user-menu {
+            display: flex; align-items: center; gap: 0.75rem;
+            cursor: pointer; padding: 0.4rem 0.8rem; border-radius: 8px;
+            transition: background 0.3s ease; position: relative;
+        }
+
+        .user-menu:hover { background: var(--bg-tertiary); }
+
+        .user-avatar {
+            width: 36px; height: 36px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            display: flex; align-items: center; justify-content: center;
+            font-weight: 700; font-size: 0.9rem;
+        }
+
+        .user-name { font-weight: 600; font-size: 0.9rem; }
+
+        .dropdown {
+            position: absolute; top: 100%; right: 0;
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 0.5rem; min-width: 200px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5); opacity: 0;
+            visibility: hidden; transform: translateY(10px);
+            transition: all 0.3s ease; z-index: 1001;
+        }
+
+        .dropdown.active { opacity: 1; visibility: visible; transform: translateY(5px); }
+
+        .dropdown-item {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.75rem 1rem; border-radius: 8px; cursor: pointer;
+            transition: background 0.2s ease; color: var(--text-secondary); font-size: 0.9rem;
+        }
+
+        .dropdown-item:hover { background: var(--bg-tertiary); color: var(--text-primary); }
+
+        .dropdown-divider { height: 1px; background: var(--border-color); margin: 0.5rem 0; }
+
+        .hero {
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            padding: 6rem 2rem 4rem; position: relative; overflow: hidden;
+        }
+
+        .hero-bg-grid {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            background-image:
+                linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px; animation: grid-move 20s linear infinite;
+        }
+
+        @keyframes grid-move {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .hero-glow {
+            position: absolute; width: 600px; height: 600px;
+            border-radius: 50%; filter: blur(150px); opacity: 0.3;
+        }
+
+        .hero-glow-1 { top: -200px; right: -100px; background: var(--accent-primary); }
+        .hero-glow-2 { bottom: -200px; left: -100px; background: var(--accent-secondary); }
+
+        .hero-content {
+            max-width: 1000px; text-align: center; position: relative; z-index: 1;
+        }
+
+        .hero-badge {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.5rem 1.5rem; background: rgba(0, 240, 255, 0.1);
+            border: 1px solid rgba(0, 240, 255, 0.3); border-radius: 50px;
+            font-size: 0.9rem; color: var(--accent-primary); margin-bottom: 2rem;
+            animation: fadeInUp 0.8s ease;
+        }
+
+        .hero-badge-dot {
+            width: 8px; height: 8px; background: var(--accent-green);
+            border-radius: 50%; animation: blink 1.5s infinite;
+        }
+
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+
+        .hero-title {
+            font-size: clamp(2.5rem, 7vw, 5rem); font-weight: 900;
+            line-height: 1.1; margin-bottom: 1.5rem; animation: fadeInUp 0.8s ease 0.1s backwards;
+        }
+
+        .hero-title .gradient-text {
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary), var(--accent-tertiary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+            background-clip: text; background-size: 200% 200%;
+            animation: gradient-shift 3s ease infinite;
+        }
+
+        @keyframes gradient-shift {
+            0%, 100% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+        }
+
+        .hero-subtitle {
+            font-size: clamp(1rem, 2vw, 1.3rem); color: var(--text-secondary);
+            max-width: 600px; margin: 0 auto 2.5rem; animation: fadeInUp 0.8s ease 0.2s backwards;
+        }
+
+        .hero-actions {
+            display: flex; align-items: center; justify-content: center;
+            gap: 1rem; margin-bottom: 3rem; animation: fadeInUp 0.8s ease 0.3s backwards;
+        }
+
+        .hero-stats {
+            display: flex; align-items: center; justify-content: center;
+            gap: 3rem; animation: fadeInUp 0.8s ease 0.4s backwards;
+        }
+
+        .hero-stat { text-align: center; }
+
+        .hero-stat-number {
+            font-size: 2rem; font-weight: 800;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+
+        .hero-stat-label {
+            font-size: 0.85rem; color: var(--text-muted);
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.8); backdrop-filter: blur(10px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 2000; opacity: 0; visibility: hidden; transition: all 0.3s ease;
+        }
+
+        .modal-overlay.active { opacity: 1; visibility: visible; }
+
+        .modal {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 20px; padding: 2.5rem; width: 100%; max-width: 450px;
+            position: relative; transform: scale(0.9) translateY(20px);
+            transition: all 0.3s ease; max-height: 90vh; overflow-y: auto;
+        }
+
+        .modal-overlay.active .modal { transform: scale(1) translateY(0); }
+
+        .modal-close {
+            position: absolute; top: 1rem; right: 1rem; width: 36px; height: 36px;
+            border-radius: 8px; background: var(--bg-tertiary); border: none;
+            color: var(--text-secondary); cursor: pointer; display: flex;
+            align-items: center; justify-content: center; font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+
+        .modal-close:hover { background: var(--accent-tertiary); color: white; }
+
+        .modal-title { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.5rem; }
+        .modal-subtitle { color: var(--text-secondary); margin-bottom: 2rem; }
+
+        .form-group { margin-bottom: 1.5rem; }
+
+        .form-label {
+            display: block; margin-bottom: 0.5rem; font-weight: 600;
+            font-size: 0.9rem; color: var(--text-secondary);
+        }
+
+        .form-input {
+            width: 100%; padding: 0.9rem 1rem; background: var(--bg-tertiary);
+            border: 1px solid var(--border-color); border-radius: 10px;
+            color: var(--text-primary); font-size: 1rem; font-family: inherit;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus { outline: none; border-color: var(--accent-primary); box-shadow: var(--glow-cyan); }
+        .form-input::placeholder { color: var(--text-muted); }
+
+        .form-error {
+            color: var(--accent-tertiary); font-size: 0.85rem; margin-top: 0.5rem; display: none;
+        }
+
+        .form-error.active { display: block; }
+
+        .form-switch {
+            text-align: center; margin-top: 1.5rem; color: var(--text-secondary); font-size: 0.9rem;
+        }
+
+        .form-switch a {
+            color: var(--accent-primary); text-decoration: none; font-weight: 600; cursor: pointer;
+        }
+
+        .form-switch a:hover { text-decoration: underline; }
+
+        .dashboard { display: none; min-height: 100vh; padding-top: 80px; }
+        .dashboard.active { display: block; }
+        .home-page, .explore-page { display: none; }
+        .home-page.active, .explore-page.active { display: block; }
+
+        .dashboard-container { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+
+        .dashboard-header {
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem;
+        }
+
+        .dashboard-title { font-size: 1.5rem; font-weight: 700; }
+
+        .dashboard-tabs {
+            display: flex; gap: 1rem; border-bottom: 1px solid var(--border-color); margin-bottom: 2rem;
+        }
+
+        .dashboard-tab {
+            padding: 1rem 1.5rem; background: none; border: none;
+            color: var(--text-secondary); font-weight: 500; cursor: pointer;
+            border-bottom: 2px solid transparent; transition: all 0.3s ease;
+            font-size: 1rem; font-family: inherit;
+        }
+
+        .dashboard-tab.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+        .dashboard-tab:hover { color: var(--text-primary); }
+
+        .project-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 1.5rem;
+        }
+
+        .project-card {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 16px; padding: 1.5rem; transition: all 0.4s ease;
+            position: relative; overflow: hidden;
+        }
+
+        .project-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), var(--accent-tertiary));
+            transform: scaleX(0); transition: transform 0.4s ease;
+        }
+
+        .project-card:hover {
+            transform: translateY(-5px); border-color: var(--accent-primary);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4), var(--glow-cyan);
+        }
+
+        .project-card:hover::before { transform: scaleX(1); }
+
+        .project-header {
+            display: flex; align-items: center; justify-content: space-between; margin-bottom: 1rem;
+        }
+
+        .project-name {
+            font-size: 1.2rem; font-weight: 700; color: var(--accent-primary);
+            display: flex; align-items: center; gap: 0.5rem;
+        }
+
+        .project-visibility {
+            padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.75rem; font-weight: 600;
+        }
+
+        .visibility-public {
+            background: rgba(0, 255, 136, 0.1); border: 1px solid rgba(0, 255, 136, 0.3); color: var(--accent-green);
+        }
+
+        .visibility-private {
+            background: rgba(255, 107, 0, 0.1); border: 1px solid rgba(255, 107, 0, 0.3); color: var(--accent-orange);
+        }
+
+        .project-desc {
+            color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1.5rem; line-height: 1.6;
+            display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+        }
+
+        .project-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+
+        .project-tag {
+            padding: 0.3rem 0.8rem; background: var(--bg-tertiary);
+            border-radius: 50px; font-size: 0.8rem; color: var(--text-secondary);
+        }
+
+        .project-meta {
+            display: flex; align-items: center; gap: 1rem; padding-top: 1rem;
+            border-top: 1px solid var(--border-color); flex-wrap: wrap;
+        }
+
+        .project-meta-item {
+            display: flex; align-items: center; gap: 0.4rem; font-size: 0.85rem; color: var(--text-muted);
+        }
+
+        .project-actions { display: flex; gap: 0.5rem; margin-top: 1rem; }
+        .project-actions .btn { flex: 1; justify-content: center; padding: 0.5rem 1rem; font-size: 0.85rem; }
+
+        .btn-icon {
+            width: 32px; height: 32px; padding: 0; display: flex; align-items: center;
+            justify-content: center; border-radius: 8px; background: var(--bg-tertiary);
+            border: 1px solid var(--border-color); color: var(--text-secondary);
+            cursor: pointer; transition: all 0.3s ease;
+        }
+
+        .btn-icon:hover { background: var(--accent-tertiary); color: white; border-color: var(--accent-tertiary); }
+
+        .empty-state {
+            text-align: center; padding: 4rem 2rem; background: var(--bg-card);
+            border: 1px dashed var(--border-color); border-radius: 16px;
+        }
+
+        .empty-state-icon { font-size: 4rem; margin-bottom: 1.5rem; }
+        .empty-state-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .empty-state-desc { color: var(--text-secondary); margin-bottom: 2rem; }
+
+        .profile-header {
+            display: flex; gap: 2rem; align-items: flex-start; padding: 2rem;
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 16px; margin-bottom: 2rem;
+        }
+
+        .profile-avatar-large {
+            width: 120px; height: 120px; border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 3rem; font-weight: 900; flex-shrink: 0;
+        }
+
+        .profile-info h2 { font-size: 1.8rem; font-weight: 800; margin-bottom: 0.25rem; }
+        .profile-username { color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 1rem; }
+        .profile-bio { color: var(--text-secondary); margin-bottom: 1rem; }
+
+        .profile-stats { display: flex; gap: 2rem; }
+        .profile-stat { font-size: 0.95rem; }
+        .profile-stat strong { color: var(--text-primary); }
+        .profile-stat span { color: var(--text-muted); }
+
+        .section { padding: 6rem 2rem; position: relative; }
+        .section-container { max-width: 1200px; margin: 0 auto; }
+        .section-header { text-align: center; margin-bottom: 4rem; }
+
+        .section-label {
+            display: inline-block; padding: 0.4rem 1rem;
+            background: rgba(124, 58, 237, 0.15); border: 1px solid rgba(124, 58, 237, 0.3);
+            border-radius: 50px; font-size: 0.85rem; color: var(--accent-secondary);
+            text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1rem;
+        }
+
+        .section-title { font-size: clamp(2rem, 4vw, 3rem); font-weight: 800; margin-bottom: 1rem; }
+        .section-desc { font-size: 1.1rem; color: var(--text-secondary); max-width: 600px; margin: 0 auto; }
+
+        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
+
+        .feature-card {
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 16px; padding: 2rem; transition: all 0.4s ease;
+            position: relative; overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+            background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), var(--accent-tertiary));
+            transform: scaleX(0); transition: transform 0.4s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px); border-color: var(--accent-primary);
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), var(--glow-cyan);
+        }
+
+        .feature-card:hover::before { transform: scaleX(1); }
+
+        .feature-icon {
+            width: 60px; height: 60px;
+            background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(124, 58, 237, 0.15));
+            border-radius: 14px; display: flex; align-items: center; justify-content: center;
+            font-size: 1.8rem; margin-bottom: 1.5rem; transition: all 0.4s ease;
+        }
+
+        .feature-card:hover .feature-icon {
+            transform: scale(1.1) rotate(5deg); box-shadow: var(--glow-cyan);
+        }
+
+        .feature-title { font-size: 1.3rem; font-weight: 700; margin-bottom: 0.75rem; }
+        .feature-desc { color: var(--text-secondary); font-size: 0.95rem; line-height: 1.7; }
+
+        .footer {
+            background: var(--bg-secondary); border-top: 1px solid var(--border-color);
+            padding: 4rem 2rem 2rem;
+        }
+
+        .footer-container { max-width: 1200px; margin: 0 auto; }
+
+        .footer-grid {
+            display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem; margin-bottom: 3rem;
+        }
+
+        .footer-brand p {
+            color: var(--text-secondary); margin-top: 1rem; font-size: 0.95rem; line-height: 1.7;
+        }
+
+        .footer-social { display: flex; gap: 1rem; margin-top: 1.5rem; }
+
+        .footer-social a {
+            width: 40px; height: 40px; border-radius: 10px; background: var(--bg-tertiary);
+            display: flex; align-items: center; justify-content: center;
+            color: var(--text-secondary); text-decoration: none; transition: all 0.3s ease;
+        }
+
+        .footer-social a:hover {
+            background: var(--accent-primary); color: var(--bg-primary); transform: translateY(-3px);
+        }
+
+        .footer-title { font-weight: 700; margin-bottom: 1.5rem; font-size: 1rem; }
+        .footer-links { list-style: none; }
+        .footer-links li { margin-bottom: 0.75rem; }
+
+        .footer-links a {
+            color: var(--text-secondary); text-decoration: none; font-size: 0.9rem; transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover { color: var(--accent-primary); }
+
+        .footer-bottom {
+            border-top: 1px solid var(--border-color); padding-top: 2rem;
+            display: flex; align-items: center; justify-content: space-between;
+            color: var(--text-muted); font-size: 0.9rem;
+        }
+
+        .reveal {
+            opacity: 0; transform: translateY(40px);
+            transition: all 0.8s cubic-bezier(0.5, 0, 0, 1);
+        }
+
+        .reveal.active { opacity: 1; transform: translateY(0); }
+        .reveal-delay-1 { transition-delay: 0.1s; }
+        .reveal-delay-2 { transition-delay: 0.2s; }
+        .reveal-delay-3 { transition-delay: 0.3s; }
+
+        .toast {
+            position: fixed; bottom: 2rem; right: 2rem; padding: 1rem 1.5rem;
+            background: var(--bg-card); border: 1px solid var(--border-color);
+            border-radius: 12px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            z-index: 3000; display: flex; align-items: center; gap: 0.75rem;
+            transform: translateY(100px); opacity: 0; transition: all 0.4s ease;
+        }
+
+        .toast.active { transform: translateY(0); opacity: 1; }
+        .toast-success { border-left: 4px solid var(--accent-green); }
+        .toast-error { border-left: 4px solid var(--accent-tertiary); }
+
+        .mobile-menu-btn {
+            display: none; flex-direction: column; gap: 5px; cursor: pointer;
+            padding: 5px; background: none; border: none;
+        }
+
+        .mobile-menu-btn span { width: 25px; height: 2px; background: var(--text-primary); }
+
+        .loading-spinner {
+            display: inline-block; width: 20px; height: 20px;
+            border: 2px solid transparent; border-top-color: currentColor;
+            border-radius: 50%; animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        @media (max-width: 1024px) {
+            .features-grid { grid-template-columns: repeat(2, 1fr); }
+            .footer-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+
+        @media (max-width: 768px) {
+            .nav-links { display: none; }
+            .nav-search { display: none; }
+            .mobile-menu-btn { display: flex; }
+            .hero-stats { flex-direction: column; gap: 1.5rem; }
+            .features-grid { grid-template-columns: 1fr; }
+            .project-grid { grid-template-columns: 1fr; }
+            .footer-grid { grid-template-columns: 1fr; }
+            .footer-bottom { flex-direction: column; gap: 1rem; text-align: center; }
+            .hero-actions { flex-direction: column; }
+            .profile-header { flex-direction: column; align-items: center; text-align: center; }
+            .profile-stats { justify-content: center; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Preloader -->
+    <div class="preloader" id="preloader">
+        <div class="preloader-content">
+            <div class="preloader-logo">Cyber-Rage</div>
+            <div class="preloader-bar">
+                <div class="preloader-bar-fill"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <span id="toastIcon"></span>
+        <span id="toastMessage"></span>
+    </div>
+
+    <!-- Particle Canvas -->
+    <canvas id="particles-canvas"></canvas>
+
+    <!-- Login Modal -->
+    <div class="modal-overlay" id="loginModal">
+        <div class="modal">
+            <button class="modal-close" onclick="closeModal('loginModal')">×</button>
+            <h2 class="modal-title">Welcome back</h2>
+            <p class="modal-subtitle">Sign in to your Cyber-Rage account</p>
+            <form id="loginForm" onsubmit="handleLogin(event)">
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="loginEmail" placeholder="your@email.com" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="loginPassword" placeholder="Enter your password" required>
+                    <p class="form-error" id="loginError">Invalid email or password</p>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 1rem;" id="loginBtn">Sign In</button>
+                <p class="form-switch">Don't have an account? <a onclick="switchModal('loginModal', 'registerModal')">Sign up</a></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div class="modal-overlay" id="registerModal">
+        <div class="modal">
+            <button class="modal-close" onclick="closeModal('registerModal')">×</button>
+            <h2 class="modal-title">Create account</h2>
+            <p class="modal-subtitle">Join millions of developers on Cyber-Rage</p>
+            <form id="registerForm" onsubmit="handleRegister(event)">
+                <div class="form-group">
+                    <label class="form-label">Username</label>
+                    <input type="text" class="form-input" id="registerUsername" placeholder="Choose a unique username" required minlength="3" maxlength="20">
+                    <p class="form-error" id="registerUsernameError">Username already taken</p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-input" id="registerEmail" placeholder="your@email.com" required>
+                    <p class="form-error" id="registerEmailError">Email already registered</p>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" class="form-input" id="registerPassword" placeholder="Min 6 characters" required minlength="6">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Confirm Password</label>
+                    <input type="password" class="form-input" id="registerConfirmPassword" placeholder="Confirm your password" required>
+                    <p class="form-error" id="registerPasswordError">Passwords don't match</p>
+                </div>
+                <button type="submit" class="btn btn-success" style="width: 100%; justify-content: center; padding: 1rem;" id="registerBtn">Create Account</button>
+                <p class="form-switch">Already have an account? <a onclick="switchModal('registerModal', 'loginModal')">Sign in</a></p>
+            </form>
+        </div>
+    </div>
+
+    <!-- New Project Modal -->
+    <div class="modal-overlay" id="newProjectModal">
+        <div class="modal" style="max-width: 550px;">
+            <button class="modal-close" onclick="closeModal('newProjectModal')">×</button>
+            <h2 class="modal-title">New Repository</h2>
+            <p class="modal-subtitle">Create a new project repository</p>
+            <form id="newProjectForm" onsubmit="handleNewProject(event)">
+                <div class="form-group">
+                    <label class="form-label">Repository Name</label>
+                    <input type="text" class="form-input" id="projectName" placeholder="my-awesome-project" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description</label>
+                    <input type="text" class="form-input" id="projectDesc" placeholder="Short description of your project">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Language</label>
+                    <select class="form-input" id="projectLang" required>
+                        <option value="">Select language</option>
+                        <option value="JavaScript">JavaScript</option>
+                        <option value="TypeScript">TypeScript</option>
+                        <option value="Python">Python</option>
+                        <option value="Rust">Rust</option>
+                        <option value="Go">Go</option>
+                        <option value="Java">Java</option>
+                        <option value="C++">C++</option>
+                        <option value="C#">C#</option>
+                        <option value="PHP">PHP</option>
+                        <option value="Ruby">Ruby</option>
+                        <option value="Swift">Swift</option>
+                        <option value="Kotlin">Kotlin</option>
+                        <option value="Other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Tags (comma separated)</label>
+                    <input type="text" class="form-input" id="projectTags" placeholder="web, react, api">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Visibility</label>
+                    <select class="form-input" id="projectVisibility" required>
+                        <option value="public">Public</option>
+                        <option value="private">Private</option>
+                    </select>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; justify-content: center; padding: 1rem;" id="projectBtn">Create Repository</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Navigation -->
+    <nav class="navbar" id="navbar">
+        <div class="nav-container">
+            <a class="nav-logo" onclick="goHome()">
+                <div class="logo-icon">CR</div>
+                <div class="logo-text"><span>Cyber</span>-Rage</div>
+            </a>
+
+            <ul class="nav-links" id="navLinks">
+                <li><a onclick="goHome()">Home</a></li>
+                <li><a onclick="showPage('explore')">Explore</a></li>
+                <li><a onclick="showPage('dashboard')">Dashboard</a></li>
+                <li><a href="#features">Features</a></li>
+            </ul>
+
+            <div class="nav-actions" id="navActions">
+                <div class="nav-search">
+                    <span class="nav-search-icon">🔍</span>
+                    <input type="text" placeholder="Search repos..." id="searchInput" oninput="handleSearch()">
+                </div>
+                <div id="authButtons">
+                    <button class="btn btn-ghost" onclick="openModal('loginModal')">Sign In</button>
+                    <button class="btn btn-primary" onclick="openModal('registerModal')">Sign Up</button>
+                </div>
+                <div id="userMenuContainer" style="display: none;">
+                    <div class="user-menu" onclick="toggleDropdown()">
+                        <div class="user-avatar" id="userAvatarNav">U</div>
+                        <span class="user-name" id="userNameNav">User</span>
+                        <span>▾</span>
+                        <div class="dropdown" id="userDropdown">
+                            <div class="dropdown-item" onclick="showPage('profile')">
+                                <span>👤</span> Your Profile
+                            </div>
+                            <div class="dropdown-item" onclick="showPage('dashboard')">
+                                <span>📁</span> Your Repositories
+                            </div>
+                            <div class="dropdown-item" onclick="openModal('newProjectModal')">
+                                <span>➕</span> New Repository
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <div class="dropdown-item" onclick="handleLogout()" style="color: var(--accent-tertiary);">
+                                <span>🚪</span> Sign Out
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <button class="mobile-menu-btn" onclick="toggleMobileMenu()">
+                <span></span><span></span><span></span>
+            </button>
+        </div>
+    </nav>
+
+    <!-- Home Page -->
+    <div class="home-page active" id="homePage">
+        <section class="hero">
+            <div class="hero-bg-grid"></div>
+            <div class="hero-glow hero-glow-1"></div>
+            <div class="hero-glow hero-glow-2"></div>
+            <div class="hero-content">
+                <div class="hero-badge">
+                    <span class="hero-badge-dot"></span>
+                    Now with AI-Powered Code Review
+                </div>
+                <h1 class="hero-title">
+                    Build Software<br>
+                    <span class="gradient-text">Like Never Before</span>
+                </h1>
+                <p class="hero-subtitle">
+                    The next-generation platform for developers. Ship code faster with intelligent collaboration and real-time code intelligence.
+                </p>
+                <div class="hero-actions">
+                    <button class="btn btn-primary btn-large" onclick="handleGetStarted()">Start Building Free →</button>
+                    <a href="#features" class="btn btn-outline btn-large">Learn More</a>
+                </div>
+                <div class="hero-stats">
+                    <div class="hero-stat">
+                        <div class="hero-stat-number counter" data-target="2400000">0</div>
+                        <div class="hero-stat-label">Developers</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-number counter" data-target="18000000">0</div>
+                        <div class="hero-stat-label">Repositories</div>
+                    </div>
+                    <div class="hero-stat">
+                        <div class="hero-stat-number counter" data-target="500000000">0</div>
+                        <div class="hero-stat-label">Commits</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="section" id="features">
+            <div class="section-container">
+                <div class="section-header reveal">
+                    <div class="section-label">Features</div>
+                    <h2 class="section-title">Everything you need to ship</h2>
+                    <p class="section-desc">Powerful tools designed for modern development teams.</p>
+                </div>
+                <div class="features-grid">
+                    <div class="feature-card reveal reveal-delay-1">
+                        <div class="feature-icon">🤖</div>
+                        <h3 class="feature-title">AI Code Review</h3>
+                        <p class="feature-desc">Intelligent code analysis that catches bugs and suggests improvements across every pull request.</p>
+                    </div>
+                    <div class="feature-card reveal reveal-delay-2">
+                        <div class="feature-icon">⚡</div>
+                        <h3 class="feature-title">Instant CI/CD</h3>
+                        <p class="feature-desc">Lightning-fast build pipelines with parallel execution. Deploy in seconds.</p>
+                    </div>
+                    <div class="feature-card reveal reveal-delay-3">
+                        <div class="feature-icon">🔐</div>
+                        <h3 class="feature-title">Advanced Security</h3>
+                        <p class="feature-desc">Built-in vulnerability scanning and compliance checks to keep code secure.</p>
+                    </div>
+                    <div class="feature-card reveal reveal-delay-1">
+                        <div class="feature-icon">🚀</div>
+                        <h3 class="feature-title">Edge Deployment</h3>
+                        <p class="feature-desc">Deploy to 200+ edge locations worldwide. Zero-config serverless functions.</p>
+                    </div>
+                    <div class="feature-card reveal reveal-delay-2">
+                        <div class="feature-icon">📊</div>
+                        <h3 class="feature-title">Real-time Analytics</h3>
+                        <p class="feature-desc">Track performance with beautiful dashboards and custom alerts.</p>
+                    </div>
+                    <div class="feature-card reveal reveal-delay-3">
+                        <div class="feature-icon">🤝</div>
+                        <h3 class="feature-title">Team Collaboration</h3>
+                        <p class="feature-desc">Code reviews, discussions, and project management all in one place.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <footer class="footer">
+            <div class="footer-container">
+                <div class="footer-grid">
+                    <div class="footer-brand">
+                        <a class="nav-logo">
+                            <div class="logo-icon">CR</div>
+                            <div class="logo-text"><span>Cyber</span>-Rage</div>
+                        </a>
+                        <p>The next-generation platform for modern software development.</p>
+                        <div class="footer-social">
+                            <a href="#">𝕏</a><a href="#">in</a><a href="#">GH</a>
+                        </div>
+                    </div>
+                    <div>
+                        <h4 class="footer-title">Product</h4>
+                        <ul class="footer-links">
+                            <li><a href="#features">Features</a></li>
+                            <li><a href="#">Pricing</a></li>
+                            <li><a href="#">Security</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="footer-title">Resources</h4>
+                        <ul class="footer-links">
+                            <li><a href="#">Documentation</a></li>
+                            <li><a href="#">API Reference</a></li>
+                            <li><a href="#">Blog</a></li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="footer-title">Company</h4>
+                        <ul class="footer-links">
+                            <li><a href="#">About</a></li>
+                            <li><a href="#">Careers</a></li>
+                            <li><a href="#">Contact</a></li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="footer-bottom">
+                    <span>© 2026 Cyber-Rage. All rights reserved.</span>
+                    <span>Made with passion for developers</span>
+                </div>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Explore Page -->
+    <div class="explore-page" id="explorePage">
+        <div class="dashboard-container" style="padding-top: 6rem;">
+            <div class="section-header">
+                <h2 class="section-title">Explore Public Repositories</h2>
+                <p class="section-desc">Discover what the community is building.</p>
+            </div>
+            <div class="project-grid" id="exploreProjects"></div>
+        </div>
+    </div>
+
+    <!-- Dashboard Page -->
+    <div class="dashboard" id="dashboardPage">
+        <div class="dashboard-container">
+            <div class="dashboard-header">
+                <h1 class="dashboard-title">Your Repositories</h1>
+                <button class="btn btn-primary" onclick="openModal('newProjectModal')">➕ New Repository</button>
+            </div>
+            <div class="dashboard-tabs">
+                <button class="dashboard-tab active" onclick="filterProjects('all', this)">All</button>
+                <button class="dashboard-tab" onclick="filterProjects('public', this)">Public</button>
+                <button class="dashboard-tab" onclick="filterProjects('private', this)">Private</button>
+            </div>
+            <div class="project-grid" id="userProjects"></div>
+            <div class="empty-state" id="emptyState" style="display: none;">
+                <div class="empty-state-icon">📦</div>
+                <h3 class="empty-state-title">No repositories yet</h3>
+                <p class="empty-state-desc">Create your first repository to get started.</p>
+                <button class="btn btn-primary" onclick="openModal('newProjectModal')">Create Repository</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Profile Page -->
+    <div class="dashboard" id="profilePage">
+        <div class="dashboard-container">
+            <div class="profile-header">
+                <div class="profile-avatar-large" id="profileAvatar">U</div>
+                <div class="profile-info">
+                    <h2 id="profileName">User</h2>
+                    <p class="profile-username" id="profileUsername">@username</p>
+                    <p class="profile-bio" id="profileEmail">user@email.com</p>
+                    <div class="profile-stats">
+                        <div class="profile-stat"><strong id="profileRepoCount">0</strong> <span>repositories</span></div>
+                    </div>
+                </div>
+            </div>
+            <h3 style="margin-bottom: 1.5rem;">Public Repositories</h3>
+            <div class="project-grid" id="profileProjects"></div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== SUPABASE CONFIG ====================
+        // ⚠️ IMPORTANT: Replace these with your actual Supabase credentials!
+        // 1. Go to https://supabase.com and create a free project
+        // 2. Go to Settings > API and copy the URL and anon key
+        const SUPABASE_URL = 'YOUR_SUPABASE_URL';
+        const SUPABASE_ANON_KEY = 'YOUR_SUPABASE_ANON_KEY';
+
+        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let currentUser = null;
+        let currentPage = 'home';
+        let currentProfile = null;
+
+        // ==================== AUTH ====================
+        async function handleRegister(e) {
+            e.preventDefault();
+            const username = document.getElementById('registerUsername').value.trim();
+            const email = document.getElementById('registerEmail').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            const confirmPassword = document.getElementById('registerConfirmPassword').value;
+            const btn = document.getElementById('registerBtn');
+
+            document.querySelectorAll('.form-error').forEach(el => el.classList.remove('active'));
+
+            if (password !== confirmPassword) {
+                document.getElementById('registerPasswordError').classList.add('active');
+                return;
+            }
+
+            if (username.length < 3) {
+                showToast('Username must be at least 3 characters', 'error');
+                return;
+            }
+
+            if (!/^[a-zA-Z0-9_]+$/.test(username)) {
+                showToast('Username can only contain letters, numbers, and underscores', 'error');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Creating account...';
+
+            try {
+                // Check if username is taken
+                const { data: existingUser } = await supabase
+                    .from('profiles')
+                    .select('id')
+                    .eq('username', username)
+                    .single();
+
+                if (existingUser) {
+                    document.getElementById('registerUsernameError').classList.add('active');
+                    btn.disabled = false;
+                    btn.textContent = 'Create Account';
+                    return;
+                }
+
+                // Create auth user
+                const { data, error } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: { username }
+                    }
+                });
+
+                if (error) throw error;
+
+                // Create profile
+                if (data.user) {
+                    const { error: profileError } = await supabase
+                        .from('profiles')
+                        .insert([{
+                            id: data.user.id,
+                            username: username,
+                            email: email,
+                            created_at: new Date().toISOString()
+                        }]);
+
+                    if (profileError) console.error('Profile error:', profileError);
+                }
+
+                closeModal('registerModal');
+                document.getElementById('registerForm').reset();
+                showToast('Account created successfully! Check your email to verify.', 'success');
+            } catch (error) {
+                showToast(error.message || 'Registration failed', 'error');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Create Account';
+        }
+
+        async function handleLogin(e) {
+            e.preventDefault();
+            const email = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const btn = document.getElementById('loginBtn');
+
+            document.querySelectorAll('.form-error').forEach(el => el.classList.remove('active'));
+
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Signing in...';
+
+            try {
+                const { data, error } = await supabase.auth.signInWithPassword({
+                    email,
+                    password
+                });
+
+                if (error) throw error;
+
+                await loadUserProfile(data.user);
+                closeModal('loginModal');
+                document.getElementById('loginForm').reset();
+                updateUI();
+                showToast(`Welcome back, ${currentProfile?.username || 'User'}!`, 'success');
+            } catch (error) {
+                document.getElementById('loginError').classList.add('active');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Sign In';
+        }
+
+        async function handleLogout() {
+            await supabase.auth.signOut();
+            currentUser = null;
+            currentProfile = null;
+            updateUI();
+            showPage('home');
+            toggleDropdown(true);
+            showToast('Signed out successfully', 'success');
+        }
+
+        async function loadUserProfile(user) {
+            currentUser = user;
+            const { data } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', user.id)
+                .single();
+
+            currentProfile = data || {
+                id: user.id,
+                username: user.user_metadata?.username || user.email.split('@')[0],
+                email: user.email
+            };
+        }
+
+        // Check for existing session on load
+        async function checkSession() {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) {
+                await loadUserProfile(session.user);
+                updateUI();
+            }
+        }
+
+        // Listen for auth changes
+        supabase.auth.onAuthStateChange(async (event, session) => {
+            if (event === 'SIGNED_IN' && session) {
+                await loadUserProfile(session.user);
+                updateUI();
+            } else if (event === 'SIGNED_OUT') {
+                currentUser = null;
+                currentProfile = null;
+                updateUI();
+            }
+        });
+
+        // ==================== PROJECTS ====================
+        async function handleNewProject(e) {
+            e.preventDefault();
+            if (!currentUser) return;
+
+            const btn = document.getElementById('projectBtn');
+            btn.disabled = true;
+            btn.innerHTML = '<span class="loading-spinner"></span> Creating...';
+
+            const name = document.getElementById('projectName').value.trim();
+            const desc = document.getElementById('projectDesc').value.trim();
+            const lang = document.getElementById('projectLang').value;
+            const tags = document.getElementById('projectTags').value.split(',').map(t => t.trim()).filter(t => t);
+            const visibility = document.getElementById('projectVisibility').value;
+
+            try {
+                // Check if project name exists for this user
+                const { data: existing } = await supabase
+                    .from('projects')
+                    .select('id')
+                    .eq('owner_id', currentUser.id)
+                    .eq('name', name)
+                    .single();
+
+                if (existing) {
+                    showToast('Repository name already exists', 'error');
+                    btn.disabled = false;
+                    btn.textContent = 'Create Repository';
+                    return;
+                }
+
+                const { error } = await supabase
+                    .from('projects')
+                    .insert([{
+                        name,
+                        description: desc || 'No description provided',
+                        language: lang,
+                        tags,
+                        visibility,
+                        owner_id: currentUser.id,
+                        owner_username: currentProfile?.username || 'Unknown'
+                    }]);
+
+                if (error) throw error;
+
+                closeModal('newProjectModal');
+                document.getElementById('newProjectForm').reset();
+                await renderUserProjects();
+                showToast('Repository created successfully!', 'success');
+            } catch (error) {
+                showToast(error.message || 'Failed to create repository', 'error');
+            }
+
+            btn.disabled = false;
+            btn.textContent = 'Create Repository';
+        }
+
+        async function deleteProject(id) {
+            if (!confirm('Are you sure you want to delete this repository?')) return;
+
+            const { error } = await supabase
+                .from('projects')
+                .delete()
+                .eq('id', id);
+
+            if (error) {
+                showToast('Failed to delete repository', 'error');
+                return;
+            }
+
+            await renderUserProjects();
+            showToast('Repository deleted', 'success');
+        }
+
+        async function renderUserProjects(filter = 'all') {
+            if (!currentUser) return;
+
+            let query = supabase
+                .from('projects')
+                .select('*')
+                .eq('owner_id', currentUser.id)
+                .order('created_at', { ascending: false });
+
+            if (filter !== 'all') {
+                query = query.eq('visibility', filter);
+            }
+
+            const { data: projects } = await query;
+
+            const container = document.getElementById('userProjects');
+            const emptyState = document.getElementById('emptyState');
+
+            if (!projects || projects.length === 0) {
+                container.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            emptyState.style.display = 'none';
+            container.innerHTML = projects.map(p => createProjectCard(p, true)).join('');
+        }
+
+        async function renderExploreProjects(searchQuery = '') {
+            let query = supabase
+                .from('projects')
+                .select('*')
+                .eq('visibility', 'public')
+                .order('created_at', { ascending: false });
+
+            if (searchQuery) {
+                query = query.or(`name.ilike.%${searchQuery}%,description.ilike.%${searchQuery}%,language.ilike.%${searchQuery}%`);
+            }
+
+            const { data: projects } = await query;
+            const container = document.getElementById('exploreProjects');
+
+            if (!projects || projects.length === 0) {
+                container.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🔍</div><h3 class="empty-state-title">No public repositories found</h3><p class="empty-state-desc">Be the first to create a public repository!</p></div>';
+                return;
+            }
+
+            container.innerHTML = projects.map(p => createProjectCard(p, false)).join('');
+        }
+
+        function createProjectCard(project, isOwner) {
+            const langColors = {
+                'JavaScript': '#f1e05a', 'TypeScript': '#3178c6', 'Python': '#3572A5',
+                'Rust': '#dea584', 'Go': '#00ADD8', 'Java': '#b07219',
+                'C++': '#f34b7d', 'C#': '#178600', 'PHP': '#4F5D95',
+                'Ruby': '#701516', 'Swift': '#F05138', 'Kotlin': '#A97BFF'
+            };
+            const langColor = langColors[project.language] || '#6b6b80';
+            const tags = Array.isArray(project.tags) ? project.tags : [];
+
+            return `
+                <div class="project-card">
+                    <div class="project-header">
+                        <div class="project-name">
+                            <span>📦</span> ${escapeHtml(project.name)}
+                        </div>
+                        <span class="project-visibility visibility-${project.visibility}">${project.visibility}</span>
+                    </div>
+                    <p class="project-desc">${escapeHtml(project.description)}</p>
+                    ${tags.length > 0 ? `
+                        <div class="project-tags">
+                            ${tags.map(t => `<span class="project-tag">${escapeHtml(t)}</span>`).join('')}
+                        </div>
+                    ` : ''}
+                    <div class="project-meta">
+                        <div class="project-meta-item">
+                            <span style="background: ${langColor}; width: 12px; height: 12px; border-radius: 50%; display: inline-block;"></span>
+                            ${escapeHtml(project.language)}
+                        </div>
+                        <div class="project-meta-item">⭐ ${project.stars || 0}</div>
+                        <div class="project-meta-item">🔀 ${project.forks || 0}</div>
+                        <div class="project-meta-item">@${escapeHtml(project.owner_username)}</div>
+                    </div>
+                    ${isOwner ? `
+                        <div class="project-actions">
+                            <button class="btn btn-ghost" style="flex: 1; justify-content: center;">Edit</button>
+                            <button class="btn-icon" onclick="deleteProject('${project.id}')" title="Delete">🗑️</button>
+                        </div>
+                    ` : ''}
+                </div>
+            `;
+        }
+
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+
+        function filterProjects(filter, btn) {
+            document.querySelectorAll('.dashboard-tab').forEach(t => t.classList.remove('active'));
+            btn.classList.add('active');
+            renderUserProjects(filter);
+        }
+
+        let searchTimeout;
+        function handleSearch() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                const query = document.getElementById('searchInput').value.trim();
+                if (currentPage !== 'explore') showPage('explore');
+                renderExploreProjects(query);
+            }, 300);
+        }
+
+        // ==================== UI ====================
+        function updateUI() {
+            const authButtons = document.getElementById('authButtons');
+            const userMenuContainer = document.getElementById('userMenuContainer');
+
+            if (currentUser && currentProfile) {
+                authButtons.style.display = 'none';
+                userMenuContainer.style.display = 'block';
+                document.getElementById('userAvatarNav').textContent = currentProfile.username.charAt(0).toUpperCase();
+                document.getElementById('userNameNav').textContent = currentProfile.username;
+                document.getElementById('profileAvatar').textContent = currentProfile.username.charAt(0).toUpperCase();
+                document.getElementById('profileName').textContent = currentProfile.username;
+                document.getElementById('profileUsername').textContent = '@' + currentProfile.username;
+                document.getElementById('profileEmail').textContent = currentProfile.email;
+            } else {
+                authButtons.style.display = 'flex';
+                userMenuContainer.style.display = 'none';
+            }
+        }
+
+        async function showPage(page) {
+            currentPage = page;
+            document.getElementById('homePage').classList.remove('active');
+            document.getElementById('explorePage').classList.remove('active');
+            document.getElementById('dashboardPage').classList.remove('active');
+            document.getElementById('profilePage').classList.remove('active');
+
+            if (page === 'home') {
+                document.getElementById('homePage').classList.add('active');
+            } else if (page === 'explore') {
+                document.getElementById('explorePage').classList.add('active');
+                await renderExploreProjects();
+            } else if (page === 'dashboard') {
+                if (!currentUser) { openModal('loginModal'); return; }
+                document.getElementById('dashboardPage').classList.add('active');
+                await renderUserProjects();
+            } else if (page === 'profile') {
+                if (!currentUser) { openModal('loginModal'); return; }
+                document.getElementById('profilePage').classList.add('active');
+                const { data: projects } = await supabase
+                    .from('projects')
+                    .select('*')
+                    .eq('owner_id', currentUser.id)
+                    .eq('visibility', 'public')
+                    .order('created_at', { ascending: false });
+
+                const count = projects ? projects.length : 0;
+                document.getElementById('profileRepoCount').textContent = count;
+                document.getElementById('profileProjects').innerHTML = projects && projects.length > 0
+                    ? projects.map(p => createProjectCard(p, false)).join('')
+                    : '<div class="empty-state"><div class="empty-state-icon">📦</div><h3 class="empty-state-title">No public repos</h3></div>';
+            }
+
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        function goHome() { showPage('home'); }
+
+        function handleGetStarted() {
+            if (currentUser) showPage('dashboard');
+            else openModal('registerModal');
+        }
+
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+            document.querySelectorAll('.form-error').forEach(el => el.classList.remove('active'));
+        }
+
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
+
+        function switchModal(from, to) {
+            closeModal(from);
+            setTimeout(() => openModal(to), 200);
+        }
+
+        function toggleDropdown(forceClose = false) {
+            const dropdown = document.getElementById('userDropdown');
+            if (forceClose) dropdown.classList.remove('active');
+            else dropdown.classList.toggle('active');
+        }
+
+        function toggleMobileMenu() {
+            const navLinks = document.getElementById('navLinks');
+            navLinks.style.display = navLinks.style.display === 'flex' ? 'none' : 'flex';
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            document.getElementById('toastIcon').textContent = type === 'success' ? '✅' : '❌';
+            document.getElementById('toastMessage').textContent = message;
+            toast.className = `toast toast-${type} active`;
+            setTimeout(() => toast.classList.remove('active'), 4000);
+        }
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.user-menu'))
+                document.getElementById('userDropdown')?.classList.remove('active');
+        });
+
+        document.querySelectorAll('.modal-overlay').forEach(overlay => {
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) overlay.classList.remove('active');
+            });
+        });
+
+        // ==================== ANIMATIONS ====================
+        window.addEventListener('load', () => {
+            setTimeout(() => document.getElementById('preloader').classList.add('hidden'), 1800);
+            checkSession();
+        });
+
+        window.addEventListener('scroll', () => {
+            document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+        });
+
+        const revealOnScroll = () => {
+            document.querySelectorAll('.reveal').forEach(el => {
+                if (el.getBoundingClientRect().top < window.innerHeight - 100)
+                    el.classList.add('active');
+            });
+        };
+        window.addEventListener('scroll', revealOnScroll);
+        window.addEventListener('load', revealOnScroll);
+
+        const formatNumber = (num) => {
+            if (num >= 1e9) return (num / 1e9).toFixed(1) + 'B';
+            if (num >= 1e6) return (num / 1e6).toFixed(1) + 'M';
+            if (num >= 1e3) return (num / 1e3).toFixed(1) + 'K';
+            return num.toString();
+        };
+
+        document.querySelectorAll('.counter').forEach(counter => {
+            const target = parseInt(counter.getAttribute('data-target'));
+            new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        let current = 0;
+                        const step = target / 120;
+                        const update = () => {
+                            current += step;
+                            counter.textContent = current < target ? formatNumber(Math.floor(current)) : formatNumber(target);
+                            if (current < target) requestAnimationFrame(update);
+                        };
+                        update();
+                        new IntersectionObserver(() => {}, { threshold: 0 }).observe(entry.target);
+                    }
+                });
+            }, { threshold: 0.5 }).observe(counter);
+        });
+
+        // Particles
+        const canvas = document.getElementById('particles-canvas');
+        const ctx = canvas.getContext('2d');
+        const resizeCanvas = () => { canvas.width = window.innerWidth; canvas.height = window.innerHeight; };
+        resizeCanvas();
+        window.addEventListener('resize', resizeCanvas);
+
+        const particles = [];
+        class Particle {
+            constructor() {
+                this.x = Math.random() * canvas.width;
+                this.y = Math.random() * canvas.height;
+                this.size = Math.random() * 2 + 0.5;
+                this.speedX = (Math.random() - 0.5) * 0.5;
+                this.speedY = (Math.random() - 0.5) * 0.5;
+                this.opacity = Math.random() * 0.5 + 0.1;
+                this.color = Math.random() > 0.5 ? '0, 240, 255' : '124, 58, 237';
+            }
+            update() {
+                this.x += this.speedX;
+                this.y += this.speedY;
+                if (this.x < 0 || this.x > canvas.width) this.speedX *= -1;
+                if (this.y < 0 || this.y > canvas.height) this.speedY *= -1;
+            }
+            draw() {
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(${this.color}, ${this.opacity})`;
+                ctx.fill();
+            }
+        }
+
+        for (let i = 0; i < 60; i++) particles.push(new Particle());
+
+        const animateParticles = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 150) {
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.strokeStyle = `rgba(0, 240, 255, ${0.05 * (1 - dist / 150)})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.stroke();
+                    }
+                }
+            }
+            requestAnimationFrame(animateParticles);
+        };
+        animateParticles();
+    </script>
+</body>
+</html>
